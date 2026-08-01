@@ -56,11 +56,18 @@ Root guide & workspace untuk **Realme C53 / RMX3760 / RMX3762** (SoC **Unisoc T6
 | Tool | Fungsi |
 |---|---|
 | **Magisk v30.7 APK** (`Magisk-v30.7.apk`) | Patch stock boot → boot image ber-root |
-| **spd_dump.exe** (`spd_tools\spd_dump.exe`) | Akses **BROM** untuk flash `w_force` + read-back |
+| **spd_dump.exe** (`brom\spd_dump.exe`) | Akses **BROM** untuk flash `w_force` + read-back |
+| **fdl1-sign.bin** (`brom\fdl1-sign.bin`) | FDL1 stage boot (BROM) |
+| **lk-fdl2-sign.bin** (`brom\lk-fdl2-sign.bin`) | FDL2 stage (u-boot/lk) |
+| **ums9230_hulk.xml / partition_*.xml** (`brom\`) | Layout partisi A/B (flash/PGPT) |
+| **pgpt.bin** (`brom\`) | Primary GPT |
 | **avbtool.py** (`tools\avbtool.py`) | Generate / patch vbmeta (flags `VERIFICATION_DISABLED`) |
 | **adb / fastboot** (Platform Tools) | Push file, konfirmasi root |
 | **Driver SPRD / OPPO USB** | Agar device terbaca di download mode |
 | **Python 3.10+** | Menjalankan `avbtool.py` |
+
+> ℹ️ Semua alat BROM (spd_dump, FDL, XML partisi, PGPT) ada di folder `brom/` di repo ini —
+> script `flash_root_boot_vbmeta.bat` **self-contained**, tidak butuh tool eksternal.
 
 ---
 
@@ -167,7 +174,7 @@ vbmeta_a (flags=0) ──▶ avbtool --flags 2 ──▶ vbmeta_a patched
 ```
 root-work/
 ├── README.md                      ← Dokumen ini
-├── flash_root_boot_vbmeta.bat     ← Script flash boot+vbmeta via BROM
+├── flash_root_boot_vbmeta.bat     ← Script flash boot+vbmeta via BROM (self-contained)
 ├── boot/
 │   ├── stock_boot.img             ← Stock boot A14 (67 MB)
 │   ├── magisk_patched_boot.img    ← Boot patched Magisk (67 MB)
@@ -175,6 +182,15 @@ root-work/
 ├── vbmeta/
 │   ├── vbmeta_a_original.img      ← vbmeta_a asli (cadangan, flags=0)
 │   └── vbmeta_a_disabled.img      ← vbmeta patched flags=2 (1 MB, avbtool)
+├── brom/                          ← Alat BROM (flash)
+│   ├── spd_dump.exe               ← Tool flash BROM
+│   ├── fdl1-sign.bin              ← FDL1 stage
+│   ├── lk-fdl2-sign.bin           ← FDL2 stage (u-boot/lk)
+│   ├── ums9230_hulk.xml           ← Layout partisi A/B
+│   ├── partition_*.xml            ← Layout partisi (session)
+│   ├── pgpt.bin                   ← Primary GPT
+│   ├── Channel.ini / Channel9.dll ← Konfigurasi & library spd_dump
+│   └── perintah-fdl1-fdl2.txt     ← Catatan perintah BROM + analisis NV
 └── .gitignore                     ← *.log, backup NV/IMEI tidak di-commit
 ```
 

@@ -4,17 +4,21 @@ REM  ROOT via Magisk - TANPA UNLOCK BOOTLOADER (metode bypass UBL)
 REM  - boot_a   = boot\magisk_patched_boot.img (sha1 A8BCB42F...)
 REM  - vbmeta_a = vbmeta\vbmeta_a_disabled.img (avbtool flags=2,
 REM               VERIFICATION_DISABLED, algorithm NONE)
-REM  Flash via BROM/spd_dump, lalu verify read-back + reboot-fastboot
+REM  Flash via BROM/spd_dump (alat di folder brom\), lalu verify
+REM  read-back + reboot-fastboot
+REM
+REM  SELF-CONTAINED: semua alat & bahan ada di folder repo ini.
+REM  FDL: brom\fdl1-sign.bin + brom\lk-fdl2-sign.bin
 REM ================================================================
 setlocal
 set ROOT=%~dp0
-set TOOL=D:\realme-c53-recovery\01_alat\spd_tools
+set TOOL=%ROOT%brom
 set VER=%ROOT%verify_out
 set LOG=%ROOT%wforce_root.log
 if not exist "%VER%" mkdir "%VER%"
 cd /d "%TOOL%"
 
-spd_dump.exe --wait 300 exec_addr 0x65015f08 fdl fdl1-dl.bin 0x65000800 fdl fdl2-dl.bin 0x9EFFFE00 exec ^
+spd_dump.exe --wait 300 exec_addr 0x65015f08 fdl fdl1-sign.bin 0x65000800 fdl lk-fdl2-sign.bin 0x9EFFFE00 exec ^
   w_force boot_a "%ROOT%boot\magisk_patched_boot.img" ^
   w_force vbmeta_a "%ROOT%vbmeta\vbmeta_a_disabled.img" ^
   read_part boot_a 0 67108864 "%VER%\verify_root_boot_a.img" ^
