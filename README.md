@@ -66,10 +66,8 @@ Tambahan (opsional): `boot\stock_boot.img` (stock asli, sha1 `9BB331EC...`),
 
 1. **Masuk download mode (BROM):** matikan device → tahan **Vol+ dan Vol−**
    bersamaan → colok USB.
-2. **Cek di Device Manager** — urutan yang muncul:
-   - Dulu: **`OPPO download port`** (`VID_22D9`) — device terdeteksi BROM.
-   - Setelah `spd_dump` konek & load FDL: berubah jadi **`SPRD U2S Diag (COMx)`**
-     (mis. `COM4`) — tanda device sudah di download mode BROM dan siap flash.
+2. **Cek di Device Manager:** akan muncul **`SPRD U2S Diag (COMx)`**
+   (mis. `COM4`) — tanda device sudah di download mode BROM dan siap flash.
 
 ### Cara A — Script otomatis (mengarah ke folder bahan)
 
