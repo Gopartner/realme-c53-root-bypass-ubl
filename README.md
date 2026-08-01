@@ -257,7 +257,7 @@ Gunakan metode ini jika ingin mengetik dan menjalankan setiap perintah secara ma
 Masuk ke folder:
 
 ```text
-root-work\brom
+realme-c53-root-bypass-ubl\brom
 ```
 
 ## 2. Jalankan `start_spd_dump.bat`
@@ -513,7 +513,7 @@ reboot-fastboot
 # 📁 Struktur Folder
 
 ```text
-root-work/
+realme-c53-root-bypass-ubl/
 │
 ├── README.md
 │   └── Dokumentasi utama repository
@@ -565,9 +565,6 @@ root-work/
     ├── pgpt.bin
     │
     ├── ums9230_hulk.xml
-    │
-    └── perintah-fdl1-fdl2.txt
-        └── Catatan perintah manual FDL1 dan FDL2
 ```
 
 ---
