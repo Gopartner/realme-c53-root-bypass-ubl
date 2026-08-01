@@ -1,18 +1,21 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions DisableDelayedExpansion
 
 REM ============================================================
 REM AUTO FLASH BOOT_A + VBMETA_A VIA SPD_DUMP
+REM Target:
+REM   boot_a   <- boot\magisk_patched_boot.img
+REM   vbmeta_a <- vbmeta\vbmeta_a_disabled.img
 REM ============================================================
 
-REM Lokasi folder project berdasarkan lokasi file BAT
+REM Lokasi root project berdasarkan lokasi file BAT
 set "ROOT=%~dp0"
 
 REM Hapus backslash terakhir
 if "%ROOT:~-1%"=="\" set "ROOT=%ROOT:~0,-1%"
 
 REM ============================================================
-REM PATH TOOL BROM
+REM PATH FOLDER DAN TOOL
 REM ============================================================
 
 set "BROM_DIR=%ROOT%\brom"
@@ -22,7 +25,7 @@ set "FDL1=%BROM_DIR%\fdl1-sign.bin"
 set "FDL2=%BROM_DIR%\lk-fdl2-sign.bin"
 
 REM ============================================================
-REM PATH FILE PARTISI
+REM PATH IMAGE PARTISI
 REM ============================================================
 
 set "BOOT_IMG=%ROOT%\boot\magisk_patched_boot.img"
@@ -32,63 +35,74 @@ REM ============================================================
 REM INFORMASI
 REM ============================================================
 
+echo.
 echo ============================================================
-echo AUTO FLASH BOOT_A + VBMETA_A
+echo AUTO FLASH BOOT_A + VBMETA_A VIA SPD_DUMP
 echo ============================================================
 echo.
 echo Project:
-echo "%ROOT%"
+echo   "%ROOT%"
 echo.
 echo Target:
+echo   boot_a
+echo     "%BOOT_IMG%"
 echo.
-echo BOOT_A:
-echo "%BOOT_IMG%"
-echo.
-echo VBMETA_A:
-echo "%VBMETA_IMG%"
+echo   vbmeta_a
+echo     "%VBMETA_IMG%"
 echo.
 
 REM ============================================================
-REM VALIDASI TOOL
+REM VALIDASI FILE
 REM ============================================================
 
-if not exist "%SPD_DUMP%" (
-    echo [ERROR] spd_dump.exe tidak ditemukan:
-    echo "%SPD_DUMP%"
-    goto :ERROR
-)
+call :CHECK_FILE "%SPD_DUMP%" "spd_dump.exe"
+if errorlevel 1 goto :ERROR
 
-if not exist "%FDL1%" (
-    echo [ERROR] fdl1-sign.bin tidak ditemukan:
-    echo "%FDL1%"
-    goto :ERROR
-)
+call :CHECK_FILE "%FDL1%" "fdl1-sign.bin"
+if errorlevel 1 goto :ERROR
 
-if not exist "%FDL2%" (
-    echo [ERROR] lk-fdl2-sign.bin tidak ditemukan:
-    echo "%FDL2%"
-    goto :ERROR
-)
+call :CHECK_FILE "%FDL2%" "lk-fdl2-sign.bin"
+if errorlevel 1 goto :ERROR
 
-REM ============================================================
-REM VALIDASI IMAGE
-REM ============================================================
+call :CHECK_FILE "%BOOT_IMG%" "magisk_patched_boot.img"
+if errorlevel 1 goto :ERROR
 
-if not exist "%BOOT_IMG%" (
-    echo [ERROR] magisk_patched_boot.img tidak ditemukan:
-    echo "%BOOT_IMG%"
-    goto :ERROR
-)
+call :CHECK_FILE "%VBMETA_IMG%" "vbmeta_a_disabled.img"
+if errorlevel 1 goto :ERROR
 
-if not exist "%VBMETA_IMG%" (
-    echo [ERROR] vbmeta_a_disabled.img tidak ditemukan:
-    echo "%VBMETA_IMG%"
-    goto :ERROR
-)
-
-echo [OK] Semua file ditemukan.
+echo.
+echo [OK] Semua file yang diperlukan ditemukan.
 echo.
 
+REM ============================================================
+REM KONFIRMASI
+REM ============================================================
+
+echo ============================================================
+echo PERINGATAN
+echo ============================================================
+echo.
+echo Script ini akan menulis:
+echo.
+echo   boot_a
+echo   vbmeta_a
+echo.
+echo Pastikan:
+echo.
+echo   1. Perangkat adalah Realme C53 RMX3760.
+echo   2. Firmware sesuai dengan image di repository.
+echo   3. Target partisi yang benar adalah slot A.
+echo   4. Perangkat sudah masuk mode BROM.
+echo.
+choice /C YN /N /M "Lanjutkan proses flash"
+
+if errorlevel 2 (
+    echo.
+    echo Proses dibatalkan oleh pengguna.
+    exit /b 0
+)
+
+echo.
 echo ============================================================
 echo MENUNGGU DEVICE DALAM MODE BROM
 echo ============================================================
@@ -97,50 +111,45 @@ echo Timeout: 300 detik
 echo.
 
 REM ============================================================
-REM KIRIM PERINTAH KE FDL2
+REM JALANKAN SPD_DUMP DARI FOLDER BROM
 REM ============================================================
 
+pushd "%BROM_DIR%"
+
 (
-    REM Tampilkan daftar partisi
     echo p
-
-    REM Cek ukuran boot_a
     echo size_part boot_a
-
-    REM Pastikan vbmeta_a tersedia
+    echo check_part boot_a
     echo check_part vbmeta_a
-
-    REM Aktifkan slot A
-    echo set_active a
-
-    REM Flash boot hasil Magisk
     echo w_force boot_a "%BOOT_IMG%"
-
-    REM Flash vbmeta disabled
     echo w_force vbmeta_a "%VBMETA_IMG%"
-
-    REM Reboot ke fastboot
     echo reboot-fastboot
-
 ) | "%SPD_DUMP%" --wait 300 exec_addr 0x65015f08 fdl "%FDL1%" 0x65000800 fdl "%FDL2%" 0x9EFFFE00 exec
 
 set "EXIT_CODE=%ERRORLEVEL%"
 
+popd
+
+REM ============================================================
+REM HASIL PROSES
+REM ============================================================
+
 echo.
 echo ============================================================
-echo PROSES SELESAI
+echo HASIL PROSES
 echo ============================================================
+echo.
 echo Exit code: %EXIT_CODE%
 echo.
 
 if not "%EXIT_CODE%"=="0" (
-    echo [ERROR] SPD_DUMP mengembalikan error.
+    echo [ERROR] SPD_DUMP mengembalikan exit code bukan 0.
     goto :ERROR
 )
 
-echo [SUCCESS] Perintah flash telah dikirim.
+echo [SUCCESS] SPD_DUMP selesai tanpa error pada exit code.
 echo.
-echo Periksa output di atas untuk memastikan:
+echo Periksa log di atas dan pastikan:
 echo.
 echo   - boot_a berhasil ditulis
 echo   - vbmeta_a berhasil ditulis
@@ -150,6 +159,24 @@ echo.
 pause
 exit /b 0
 
+REM ============================================================
+REM FUNCTION: VALIDASI FILE
+REM ============================================================
+
+:CHECK_FILE
+if exist "%~1" (
+    echo [OK] %~2
+    exit /b 0
+)
+
+echo.
+echo [ERROR] %~2 tidak ditemukan:
+echo "%~1"
+exit /b 1
+
+REM ============================================================
+REM ERROR HANDLER
+REM ============================================================
 
 :ERROR
 echo.
