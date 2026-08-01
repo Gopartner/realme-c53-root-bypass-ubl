@@ -1,0 +1,8 @@
+# File besar / duplikat tidak di-commit
+*.img
+*.bin
+*.log
+
+# Artefak Windows
+Thumbs.db
+Desktop.ini
