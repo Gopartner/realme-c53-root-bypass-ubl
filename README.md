@@ -43,12 +43,13 @@ Root guide & workspace untuk **Realme C53 / RMX3760 / RMX3762** (SoC **Unisoc T6
 
 | Bahan | Lokasi |
 |---|---|
-| Stock boot `boot_a` A14 (67 MB) | `D:\downloader-firmware\results\pac-bootchain\boot.img` |
-| Magisk patched boot (`magisk_patched_boot.img`) | `D:\realme-c53-recovery\03_downgrade_a14\magisk_patched_boot.img` |
-| vbmeta_a asli (`verify_vbmeta_a.img`, flags=0) | `root-work\verify\` (cadangan) |
-| vbmeta_a patched (`verify_vbmeta_a_new_pad.img`, flags=2) | `root-work\verify\` |
-| XML partisi A/B | `D:\downloader-firmware\results\pac-bootchain\ums9230_hulk.xml` |
-| Backup A15 NV `l_fixnv1_a.img` (VN wrapper, berisi IMEI) | `D:\realme-c53-recovery\03_downgrade_a14\backup_a15_fresh\` |
+| Stock boot `boot_a` A14 (67 MB) | `boot\stock_boot.img` |
+| Magisk patched boot (67 MB) | `boot\magisk_patched_boot.img` |
+| Verify boot read-back dari device | `boot\verify_boot_a.img` |
+| vbmeta_a asli (flags=0) | `vbmeta\vbmeta_a_original.img` |
+| vbmeta_a patched flags=2 (avbtool, 1 MB pad) | `vbmeta\vbmeta_a_disabled.img` |
+| XML partisi A/B | `D:\downloader-firmware\results\pac-bootchain\ums9230_hulk.xml` (di luar repo) |
+| Backup A15 NV `l_fixnv1_a.img` (VN wrapper, berisi IMEI) | `D:\realme-c53-recovery\03_downgrade_a14\backup_a15_fresh\` (di luar repo, TIDAK di-push) |
 
 ## 🛠️ Tools
 
@@ -99,13 +100,10 @@ Dua varian tersedia:
 **Varian A — generate ulang dengan avbtool (disarankan):**
 ```
 python tools\avbtool.py make_vbmeta_image ^
-  --flags 2 --include_descriptors_from_image verify_vbmeta_a.img ^
-  --output verify_vbmeta_a_new.img
+  --flags 2 --include_descriptors_from_image vbmeta_a_original.img ^
+  --output vbmeta_a_disabled.img
 ```
-lalu pad ke 1 MB:
-```
-python -c "open('verify_vbmeta_a_new_pad.img','wb').write(open('verify_vbmeta_a_new.img','rb').read()+bytes(1048576-15552))"
-```
+(file `vbmeta\vbmeta_a_disabled.img` di repo sudah jadi & ter-pad 1 MB)
 
 **Varian B — patch in-place (ubah byte flags @ offset 120):**
 - Ubah 4 byte `flags` pada offset `120` dari `00 00 00 00` menjadi `02 00 00 00`.
@@ -170,12 +168,23 @@ vbmeta_a (flags=0) ──▶ avbtool --flags 2 ──▶ vbmeta_a patched
 root-work/
 ├── README.md                      ← Dokumen ini
 ├── flash_root_boot_vbmeta.bat     ← Script flash boot+vbmeta via BROM
-├── verify/
-│   ├── verify_vbmeta_a.img        ← vbmeta_a asli (cadangan)
-│   ├── verify_vbmeta_a_new_pad.img← vbmeta patched flags=2 (1 MB, avbtool)
-│   └── verify_vbmeta_a_patched.img← vbmeta patched in-place (flags byte)
-└── .gitignore                     ← *.img/*.bin/*.log tidak di-commit
+├── boot/
+│   ├── stock_boot.img             ← Stock boot A14 (67 MB)
+│   ├── magisk_patched_boot.img    ← Boot patched Magisk (67 MB)
+│   └── verify_boot_a.img          ← Read-back boot_a dari device
+├── vbmeta/
+│   ├── vbmeta_a_original.img      ← vbmeta_a asli (cadangan, flags=0)
+│   └── vbmeta_a_disabled.img      ← vbmeta patched flags=2 (1 MB, avbtool)
+└── .gitignore                     ← *.log, backup NV/IMEI tidak di-commit
 ```
+
+## 🔢 Hash Bahan (untuk verifikasi)
+
+| File | SHA1 |
+|---|---|
+| `boot\stock_boot.img` | `9BB331EC300AD684BF7FB2F28473F523CDD13C02` |
+| `boot\magisk_patched_boot.img` | `A8BCB42FBD2EBFE5B753C0C4021A6BB11D6BA2BD` |
+| `vbmeta\vbmeta_a_disabled.img` | `7C79BBFCF485822582B30DBE45B8B1DDAA6332B4` |
 
 ---
 

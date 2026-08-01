@@ -1,8 +1,8 @@
-# File besar / duplikat tidak di-commit
-*.img
-*.bin
+# Log & artefak sementara tidak di-commit
 *.log
-
-# Artefak Windows
 Thumbs.db
 Desktop.ini
+
+# Bahan NV/IMEI (data pribadi) TIDAK masuk repo
+**/backup_a15_fresh/
+**/*nvitem*

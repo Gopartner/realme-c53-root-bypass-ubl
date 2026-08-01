@@ -1,22 +1,22 @@
 @echo off
 REM ================================================================
 REM  ROOT via Magisk - TANPA UNLOCK BOOTLOADER (metode bypass UBL)
-REM  - boot_a   = magisk_patched_boot.img (sha1 A8BCB42F...)
-REM  - vbmeta_a = verify_vbmeta_a_new_pad.img (avbtool flags=2,
+REM  - boot_a   = boot\magisk_patched_boot.img (sha1 A8BCB42F...)
+REM  - vbmeta_a = vbmeta\vbmeta_a_disabled.img (avbtool flags=2,
 REM               VERIFICATION_DISABLED, algorithm NONE)
 REM  Flash via BROM/spd_dump, lalu verify read-back + reboot-fastboot
 REM ================================================================
 setlocal
-set DIR=D:\realme-c53-recovery\03_downgrade_a14
+set ROOT=%~dp0
 set TOOL=D:\realme-c53-recovery\01_alat\spd_tools
-set VER=%DIR%\verify
-set LOG=%DIR%\wforce_root.log
+set VER=%ROOT%verify_out
+set LOG=%ROOT%wforce_root.log
 if not exist "%VER%" mkdir "%VER%"
 cd /d "%TOOL%"
 
 spd_dump.exe --wait 300 exec_addr 0x65015f08 fdl fdl1-dl.bin 0x65000800 fdl fdl2-dl.bin 0x9EFFFE00 exec ^
-  w_force boot_a "%DIR%\magisk_patched_boot.img" ^
-  w_force vbmeta_a "%VER%\verify_vbmeta_a_new_pad.img" ^
+  w_force boot_a "%ROOT%boot\magisk_patched_boot.img" ^
+  w_force vbmeta_a "%ROOT%vbmeta\vbmeta_a_disabled.img" ^
   read_part boot_a 0 67108864 "%VER%\verify_root_boot_a.img" ^
   read_part vbmeta_a 0 1048576 "%VER%\verify_root_vbmeta_a.img" ^
   reboot-fastboot > "%LOG%" 2>&1
