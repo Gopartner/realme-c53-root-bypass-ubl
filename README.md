@@ -1,10 +1,10 @@
-# 🔓 Root Realme C53 (RMX3760) via Magisk — BROM/SPD Dump
+# Root Realme C53 (RMX3760) via Magisk menggunakan BROM/SPD Dump
 
-> **Metode:** Magisk-patched `boot` + patched `vbmeta` dengan `AVB_VBMETA_IMAGE_FLAGS_VERIFICATION_DISABLED`
+> **Metode root:** Magisk-patched `boot` + patched `vbmeta` dengan flag `AVB_VBMETA_IMAGE_FLAGS_VERIFICATION_DISABLED`.
 >
-> **Flash:** melalui **Unisoc BROM / `spd_dump`**
+> **Metode flash:** Unisoc BROM menggunakan `spd_dump`.
 >
-> **Bootloader:** metode ini telah diuji untuk root tanpa proses unlock bootloader dan tanpa wipe data pada konfigurasi perangkat yang disebutkan di bawah.
+> **Status bootloader:** Metode ini telah diuji pada perangkat dengan bootloader masih terkunci, tanpa proses unlock bootloader dan tanpa wipe data.
 
 ---
 
