@@ -120,8 +120,31 @@ python tools\avbtool.py make_vbmeta_image ^
 
 1. **Masuk download mode:** matikan device → tahan **Vol+ dan Vol−** → colok USB.
    Tunggu muncul **`OPPO download port`** (`VID_22D9`).
-2. Jalankan `flash_root_boot_vbmeta.bat` (isi: `w_force boot_a` patched + `w_force vbmeta_a` patched
-   + `read_part` verify + `reboot-fastboot`).
+
+Dua cara flash — pilih salah satu:
+
+**Cara A — Script otomatis (1 klik):**
+```
+flash_root_boot_vbmeta.bat
+```
+Isi script: `w_force boot_a` (patched) + `w_force vbmeta_a` (disabled) + `read_part` verify + `reboot-fastboot`.
+
+**Cara B — Manual interaktif (ketik partisi satu-persatu di prompt FDL2>):**
+1. Masuk prompt FDL2:
+   ```
+   cd /d D:\porting-custom-rom\root-work\brom
+   spd_dump.exe --wait 300 exec_addr 0x65015f08 fdl fdl1-sign.bin 0x65000800 fdl lk-fdl2-sign.bin 0x9EFFFE00 exec
+   ```
+2. Lalu ketik di `FDL2>`:
+   ```
+   w_force boot_a ..\boot\magisk_patched_boot.img
+   w_force vbmeta_a ..\vbmeta\vbmeta_a_disabled.img
+   read_part boot_a 0 67108864 ..\verify_out\cek_boot_a.img
+   read_part vbmeta_a 0 1048576 ..\verify_out\cek_vbmeta_a.img
+   reboot-fastboot
+   ```
+
+> 📖 Panduan manual lengkap: **[FLASH_MANUAL_INTERAKTIF.md](FLASH_MANUAL_INTERAKTIF.md)**
 
 > Tanpa unlock bootloader, ganti vbmeta_a ke flags=2 membuat bootloader boot dalam
 > **orange state** — verifiedbootstate berubah dari `green` → `orange`, tapi **tanpa wipe data**.
@@ -173,7 +196,8 @@ vbmeta_a (flags=0) ──▶ avbtool --flags 2 ──▶ vbmeta_a patched
 
 ```
 root-work/
-├── README.md                      ← Dokumen ini
+├── README.md                      ← Dokumen utama (tutorial + info)
+├── FLASH_MANUAL_INTERAKTIF.md     ← Panduan flash manual (ketik di prompt FDL2>)
 ├── flash_root_boot_vbmeta.bat     ← Script flash boot+vbmeta via BROM (self-contained)
 ├── boot/
 │   ├── stock_boot.img             ← Stock boot A14 (67 MB)
