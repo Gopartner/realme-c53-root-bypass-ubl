@@ -30,19 +30,22 @@
 Device memakai sistem **A/B (VAB)** — partisi punya dua salinan: `boot_a`/`boot_b`,
 `vbmeta_a`/`vbmeta_b`, dst. **Yang harus di-flash = slot yang aktif.**
 
-- Cek slot aktif (dari HP / mode fastboot):
-  ```
-  adb shell getprop ro.boot.slot_suffix
-  ```
-- Output `_a` → flash `boot_a`, `vbmeta_a` (contoh di repo ini)
+**1. Cek slot aktif dari HP (sebelum flash):**
+```
+adb shell getprop ro.boot.slot_suffix
+```
+- Output `_a` → flash `boot_a`, `vbmeta_a` (perangkat uji ini slotnya `_a`)
 - Output `_b` → flash `boot_b`, `vbmeta_b`
 
-Cek / paksa slot lewat BROM di prompt `FDL2>`:
+**2. Teliti cek lagi slot aktif di prompt `FDL2>` sebelum flash:**
 ```
-FDL2> p                       REM lihat daftar partisi
-FDL2> set_active a            REM paksa slot A aktif
+FDL2> p                       REM lihat daftar partisi (boot_a/boot_b, vbmeta_a/vbmeta_b)
+FDL2> size_part boot_a        REM cek ukuran (harus 67108864)
+FDL2> check_part vbmeta_a     REM pastikan partisi slot aktif ada
+FDL2> set_active a            REM paksa slot A aktif (sesuaikan dengan slot Anda)
 FDL2> set_active b            REM paksa slot B aktif
 ```
+⚠️ Flash **hanya ke slot yang aktif**. Kalau slot aktif `_b`, pakai `boot_b` / `vbmeta_b`.
 
 ---
 
@@ -62,7 +65,11 @@ Tambahan (opsional): `boot\stock_boot.img` (stock asli, sha1 `9BB331EC...`),
 ## 🔥 Flash via BROM — Pilih Salah Satu
 
 1. **Masuk download mode (BROM):** matikan device → tahan **Vol+ dan Vol−**
-   bersamaan → colok USB. Tunggu muncul **`OPPO download port`** (`VID_22D9`).
+   bersamaan → colok USB.
+2. **Cek di Device Manager** — urutan yang muncul:
+   - Dulu: **`OPPO download port`** (`VID_22D9`) — device terdeteksi BROM.
+   - Setelah `spd_dump` konek & load FDL: berubah jadi **`SPRD U2S Diag (COMx)`**
+     (mis. `COM4`) — tanda device sudah di download mode BROM dan siap flash.
 
 ### Cara A — Script otomatis (mengarah ke folder bahan)
 
@@ -81,7 +88,8 @@ tampilkan hash → `reboot-fastboot`.
 cd /d D:\porting-custom-rom\root-work\brom
 spd_dump.exe --wait 300 exec_addr 0x65015f08 fdl fdl1-sign.bin 0x65000800 fdl lk-fdl2-sign.bin 0x9EFFFE00 exec
 ```
-Lalu ketik di `FDL2>`:
+Setelah muncul `FDL2>` — **teliti dulu slot aktif** (`p`, `size_part`, `set_active a`),
+lalu flash ke slot aktif. Contoh untuk slot A (`_a`):
 ```
 w_force boot_a ..\boot\magisk_patched_boot.img
 w_force vbmeta_a ..\vbmeta\vbmeta_a_disabled.img

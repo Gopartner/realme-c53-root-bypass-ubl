@@ -42,7 +42,10 @@ FDL2> set_active b            REM paksa slot B aktif
    - Matikan device (power off).
    - Tahan **Volume + dan Volume −** bersamaan.
    - Sambil menahan, colokkan kabel USB ke PC.
-   - Tunggu muncul **`OPPO download port`** (`VID_22D9`) di Device Manager.
+   - Di **Device Manager** cek urutan yang muncul:
+     - Dulu: **`OPPO download port`** (`VID_22D9`) — device terdeteksi BROM.
+     - Setelah `spd_dump` konek & load FDL: berubah jadi **`SPRD U2S Diag (COMx)`**
+       (mis. `COM4`) — tanda device sudah di download mode BROM dan siap flash.
 
 ---
 
