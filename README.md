@@ -1,122 +1,101 @@
 # 🔓 Root Realme C53 (RMX3760) via Magisk — Metode Bypass UBL (Tanpa Unlock Bootloader)
 
-> **Tema / metode root:** Magisk patched boot + patched `vbmeta_a` (`AVB_VBMETA_IMAGE_FLAGS_VERIFICATION_DISABLED`)
+> **Metode root:** Magisk patched boot + patched `vbmeta_a` (`AVB_VBMETA_IMAGE_FLAGS_VERIFICATION_DISABLED`)
 > — root **tanpa unlock bootloader** (tanpa wipe data), flash via **BROM/spd_dump**.
 
-Root guide & workspace untuk **Realme C53 / RMX3760 / RMX3762** (SoC **Unisoc T612 / UMS9230H**, platform **qogirl6**).
+Repo ini menyediakan **alat + bahan** untuk root Realme C53 / RMX3760 / RMX3762
+(SoC **Unisoc T612 / UMS9230H**, platform **qogirl6**).
 
 ---
 
-## 🏷️ Info Perangkat
+## 🧪 HP yang Sudah Teruji
 
-| Item | Nilai |
+| Info | Nilai |
 |---|---|
-| **Merk / Model** | Realme C53 (RMX3760, RMX3762) |
+| **Model** | Realme C53 (RMX3760 / RMX3762) |
 | **SoC / Platform** | Unisoc T612 (**UMS9230H**, platform `qogirl6`) |
-| **CPU** | 2× Cortex-A78 + 6× Cortex-A55 |
-| **GPU** | Mali-G57 |
-| **RAM / Storage** | 4–8 GB / 64–128 GB eMMC |
-| **Slot / A-B** | A/B (aktif: `_a`) |
-| **Kernel** | `5.15.178-android13-8` (non-GKI) |
+| **Kondisi awal** | Android 15 (build `export_15_*`) |
+| **Downgrade** | A15 → **Android 14** (`RMX3760export_14_C.23`) |
+| **Versi yang diuji root** | **Android 14** `RMX3760export_14_C.23` |
+| **Bootloader** | `locked`, AVB `enforcing` |
+| **Root yang dipakai** | Magisk v30.7 (patch boot via CLI) |
 
-## 🤖 Info Versi Android
-
-| Build | Versi | Catatan |
-|---|---|---|
-| **Android 14 (saat ini)** | `RMX3760export_14_C.23` | Hasil downgrade A15→A14, basis root |
-| Android 15 (sebelumnya) | `RMX3760export_15_*` | Backup `l_fixnv1_a` diambil dari build ini |
-| Bootloader | `locked` (`ro.boot.flash.locked=1`) | AVB `enforcing`, verifiedbootstate `green` |
-| Magisk | **v30.7** | Patch boot via CLI `boot_patch.sh` |
+> ⚠️ **Bahan boot/vbmeta di repo ini dibuat dari build `RMX3760export_14_C.23` (A14).**
+> Bahan tersebut **hanya cocok** jika firmware aktif di HP Anda adalah build yang sama.
 
 ---
 
-## ⚠️ Peringatan
+## 🧭 Langkah 0 — Cek Firmware Aktif di HP Anda
 
-- Proses ini **berisiko** — dapat membuat device tidak boot jika salah.
-- Pastikan IMEI / NV **sudah dibackup** sebelum memulai.
-- Kerjakan **di atas meja yang stabil**, colok USB **tidak putus-putus**.
-- Hanya untuk **device Anda sendiri**.
+Hubungkan HP (aktifkan **USB debugging**), lalu jalankan:
 
----
+```
+adb shell getprop ro.build.display.id
+adb shell getprop ro.build.version.incremental
+adb shell getprop ro.product.model
+adb shell getprop ro.build.fingerprint
+```
 
-## 📦 Bahan (Materials)
+Bandingkan dengan bahan yang kita pakai:
 
-| Bahan | Lokasi |
+| Properti | Nilai bahan di repo ini |
 |---|---|
-| Stock boot `boot_a` A14 (67 MB) | `boot\stock_boot.img` |
-| Magisk patched boot (67 MB) | `boot\magisk_patched_boot.img` |
-| Verify boot read-back dari device | `boot\verify_boot_a.img` |
-| vbmeta_a asli (flags=0) | `vbmeta\vbmeta_a_original.img` |
-| vbmeta_a patched flags=2 (avbtool, 1 MB pad) | `vbmeta\vbmeta_a_disabled.img` |
-| XML partisi A/B | `D:\downloader-firmware\results\pac-bootchain\ums9230_hulk.xml` (di luar repo) |
-| Backup A15 NV `l_fixnv1_a.img` (VN wrapper, berisi IMEI) | `D:\realme-c53-recovery\03_downgrade_a14\backup_a15_fresh\` (di luar repo, TIDAK di-push) |
+| `ro.build.display.id` | `RMX3760export_14_C.23` |
+| `ro.build.version.incremental` | `C.23` |
+| `ro.product.model` | `RMX3760` atau `RMX3762` |
+| `ro.build.fingerprint` | berakhiran `...:14/RKQ1...` (Android 14) |
 
-## 🛠️ Tools
+**Hasil cek → dua kemungkinan:**
 
-| Tool | Fungsi |
-|---|---|
-| **Magisk v30.7 APK** (`Magisk-v30.7.apk`) | Patch stock boot → boot image ber-root |
-| **spd_dump.exe** (`brom\spd_dump.exe`) | Akses **BROM** untuk flash `w_force` + read-back |
-| **fdl1-sign.bin** (`brom\fdl1-sign.bin`) | FDL1 stage boot (BROM) |
-| **lk-fdl2-sign.bin** (`brom\lk-fdl2-sign.bin`) | FDL2 stage (u-boot/lk) |
-| **ums9230_hulk.xml / partition_*.xml** (`brom\`) | Layout partisi A/B (flash/PGPT) |
-| **pgpt.bin** (`brom\`) | Primary GPT |
-| **avbtool.py** (`tools\avbtool.py`) | Generate / patch vbmeta (flags `VERIFICATION_DISABLED`) |
-| **adb / fastboot** (Platform Tools) | Push file, konfirmasi root |
-| **Driver SPRD / OPPO USB** | Agar device terbaca di download mode |
-| **Python 3.10+** | Menjalankan `avbtool.py` |
-
-> ℹ️ Semua alat BROM (spd_dump, FDL, XML partisi, PGPT) ada di folder `brom/` di repo ini —
-> script `flash_root_boot_vbmeta.bat` **self-contained**, tidak butuh tool eksternal.
+- ✅ **COCOK** → Anda bisa langsung pakai bahan milik kita (`boot\magisk_patched_boot.img` + `vbmeta\vbmeta_a_disabled.img`), lanjut ke [Langkah 3](#langkah-3--flash).
+- ❌ **TIDAK cocok / build beda** → ambil boot milik Anda sendiri dan patch sendiri ([Langkah 1a](#langkah-1a--patch-boot-milik-sendiri)), lalu disable vbmeta ([Langkah 1b](#langkah-1b--disable-vbmeta-milik-sendiri)).
 
 ---
 
-## 📖 Tutorial Root (Step-by-Step)
+## Langkah 1a — Patch Boot Milik Sendiri (jika build beda)
 
-### 0. Persiapan
-
-1. Backup **IMEI/NV** dan data penting.
-2. Install **Magisk v30.7** di device (`adb install -r Magisk-v30.7.apk`).
-3. Push stock boot ke device:
-   ```
-   adb push boot.img /data/local/tmp/stock_boot.img
-   ```
-
-### 1. Patch Boot dengan Magisk (di device, via CLI)
-
+> **Cara A — Script otomatis (disarankan):**
 ```
-adb shell
-cd /data/local/tmp/magisk
-./magiskboot unpack stock_boot.img
-sh boot_patch.sh stock_boot.img
+scripts\patch_boot.bat boot\stock_boot.img
 ```
-Hasil: `new-boot.img` = boot image ber-root.
-Pull ke PC:
+atau dengan boot milik sendiri:
 ```
-adb pull /data/local/tmp/magisk/new-boot.img D:\realme-c53-recovery\03_downgrade_a14\magisk_patched_boot.img
+scripts\patch_boot.bat D:\punya_sendiri\boot.img
 ```
+Script akan: ekstrak Magisk APK → push binary → jalankan `boot_patch.sh` → tarik hasil `xxx_magisk.img`.
 
-> **Hash referensi**
-> - Stock: `9BB331EC300AD684BF7FB2F28473F523CDD13C02`
-> - Patched: `A8BCB42FBD2EBFE5B753C0C4021A6BB11D6BA2BD`
+> **Cara B — Manual via aplikasi Magisk:**
+> 1. Install Magisk di HP.
+> 2. Buka Magisk → **Install → Select and Patch a File** → pilih `boot.img`.
+> 3. Hasil `magisk_patched_boot.img` tersimpan di Download.
 
-### 2. Patch vbmeta_a (flags=2 → verification disabled)
+> **Dapatkan `boot.img` milik sendiri** dari firmware build Anda (extract dari PAC/ROM),
+> atau baca dari partisi device via BROM: `read_part boot_a 0 67108864 boot.img`.
 
-Dua varian tersedia:
+**Hasil:** boot patched (mis. `stock_boot_magisk.img`).
 
-**Varian A — generate ulang dengan avbtool (disarankan):**
+---
+
+## Langkah 1b — Disable VBMeta Milik Sendiri
+
+> **Script otomatis:**
 ```
-python tools\avbtool.py make_vbmeta_image ^
-  --flags 2 --include_descriptors_from_image vbmeta_a_original.img ^
-  --output vbmeta_a_disabled.img
+scripts\disable_vbmeta.bat vbmeta\vbmeta_a_original.img
 ```
-(file `vbmeta\vbmeta_a_disabled.img` di repo sudah jadi & ter-pad 1 MB)
+atau pakai vbmeta milik firmware Anda sendiri:
+```
+scripts\disable_vbmeta.bat D:\punya_sendiri\vbmeta.img
+```
+Script akan: generate vbmeta baru dengan flags=2 → pad ke 1 MB → tampilkan hash + info.
+Hasil: `vbmeta_a_disabled.img` (atau `xxx_disabled.img` di samping input).
 
-**Varian B — patch in-place (ubah byte flags @ offset 120):**
-- Ubah 4 byte `flags` pada offset `120` dari `00 00 00 00` menjadi `02 00 00 00`.
-- Hash hasil: `5FA4A6B5603C576974C63D275DE41F1C8A4A0F4D`.
+> ℹ️ Anda **boleh** pakai vbmeta disabled dari repo ini (`vbmeta\vbmeta_a_disabled.img`)
+> jika firmware Anda build A14 C.23 — atau buat sendiri dari vbmeta firmware Anda
+> dengan script di atas. Keduanya sama-sama valid untuk metode bypass UBL.
 
-### 3. Flash via BROM (spd_dump) — boot_a + vbmeta_a
+---
+
+## Langkah 3 — Flash via BROM (boot_a + vbmeta_a)
 
 1. **Masuk download mode:** matikan device → tahan **Vol+ dan Vol−** → colok USB.
    Tunggu muncul **`OPPO download port`** (`VID_22D9`).
@@ -130,26 +109,27 @@ flash_root_boot_vbmeta.bat
 Isi script: `w_force boot_a` (patched) + `w_force vbmeta_a` (disabled) + `read_part` verify + `reboot-fastboot`.
 
 **Cara B — Manual interaktif (ketik partisi satu-persatu di prompt FDL2>):**
-1. Masuk prompt FDL2:
-   ```
-   cd /d D:\porting-custom-rom\root-work\brom
-   spd_dump.exe --wait 300 exec_addr 0x65015f08 fdl fdl1-sign.bin 0x65000800 fdl lk-fdl2-sign.bin 0x9EFFFE00 exec
-   ```
-2. Lalu ketik di `FDL2>`:
-   ```
-   w_force boot_a ..\boot\magisk_patched_boot.img
-   w_force vbmeta_a ..\vbmeta\vbmeta_a_disabled.img
-   read_part boot_a 0 67108864 ..\verify_out\cek_boot_a.img
-   read_part vbmeta_a 0 1048576 ..\verify_out\cek_vbmeta_a.img
-   reboot-fastboot
-   ```
+```
+cd /d D:\porting-custom-rom\root-work\brom
+spd_dump.exe --wait 300 exec_addr 0x65015f08 fdl fdl1-sign.bin 0x65000800 fdl lk-fdl2-sign.bin 0x9EFFFE00 exec
+```
+lalu ketik di `FDL2>`:
+```
+w_force boot_a ..\boot\magisk_patched_boot.img
+w_force vbmeta_a ..\vbmeta\vbmeta_a_disabled.img
+read_part boot_a 0 67108864 ..\verify_out\cek_boot_a.img
+read_part vbmeta_a 0 1048576 ..\verify_out\cek_vbmeta_a.img
+reboot-fastboot
+```
 
 > 📖 Panduan manual lengkap: **[FLASH_MANUAL_INTERAKTIF.md](FLASH_MANUAL_INTERAKTIF.md)**
 
-> Tanpa unlock bootloader, ganti vbmeta_a ke flags=2 membuat bootloader boot dalam
+> ℹ️ Tanpa unlock bootloader, ganti vbmeta_a ke flags=2 membuat bootloader boot dalam
 > **orange state** — verifiedbootstate berubah dari `green` → `orange`, tapi **tanpa wipe data**.
 
-### 4. Konfirmasi Root
+---
+
+## Langkah 4 — Konfirmasi Root
 
 ```
 adb shell su -c id
@@ -158,37 +138,39 @@ Harus muncul: `uid=0(root) gid=0(root) ...`
 
 Atau buka aplikasi **Magisk** → status **Installed / All good**.
 
-### 5. Rollback (jika gagal boot)
+---
 
-Flash kembali `vbmeta_a` asli (`verify_vbmeta_a.img`) dan stock boot via BROM.
+## Langkah 5 — Rollback (jika gagal boot)
+
+Flash kembali `vbmeta_a` asli (`vbmeta\vbmeta_a_original.img`) dan stock boot via BROM.
 
 ---
 
-## 🧠 Info Proses (Kenapa Metode Ini)
+## 🛠️ Alat yang Disediakan
 
-### Mengapa perlu patch vbmeta?
+| Alat | Lokasi | Fungsi |
+|---|---|---|
+| **spd_dump.exe** | `brom\spd_dump.exe` | Akses BROM, flash `w_force`, read-back |
+| **fdl1-sign.bin** | `brom\` | FDL1 stage boot (BROM) |
+| **lk-fdl2-sign.bin** | `brom\` | FDL2 stage (u-boot/lk) |
+| **ums9230_hulk.xml / partition_*.xml** | `brom\` | Layout partisi A/B |
+| **pgpt.bin** | `brom\` | Primary GPT |
+| **Channel.ini / Channel9.dll** | `brom\` | Konfigurasi & library spd_dump |
+| **avbtool.py** | `tools\avbtool.py` | Generate/patch vbmeta (flags=2) |
+| **patch_boot.bat** | `scripts\` | Patch boot milik sendiri dengan Magisk |
+| **disable_vbmeta.bat** | `scripts\` | Disable vbmeta milik sendiri |
 
-1. vbmeta_a top-level saat ini: **flags=0** (verification **aktif**), ditandatangani OEM key (`30f6c776...`).
-2. Partisi `boot` diverifikasi via **Chain Partition descriptor** (public key `d7fabec6...`).
-3. Boot image stock membawa **footer `VBMETA`** (AVB 1.0 `AVBf` + vbmeta embedded `AVB0`, flags=0).
-4. Setelah di-patch Magisk, kernel & ramdisk berubah → **digest footer tidak cocok lagi**.
-5. Pada bootloader **locked**, boot image yang berubah **ditolak** → perlu `vbmeta_a` dengan
-   flag `AVB_VBMETA_IMAGE_FLAGS_VERIFICATION_DISABLED` (nilai `2`).
-6. Dengan flags=2, bootloader **skip verifikasi** semua partisi (orange state) tanpa unlock/w ipe.
+> ℹ️ **Semua alat self-contained** di repo ini — script tidak butuh tool eksternal.
 
-### Alur Proses
+## 📦 Bahan yang Disediakan
 
-```
-Stock boot ──▶ Magisk boot_patch.sh ──▶ magisk_patched_boot.img
-                                                        │
-vbmeta_a (flags=0) ──▶ avbtool --flags 2 ──▶ vbmeta_a patched
-                                                        │
-                         ┌──────────────────────────────┤
-                         ▼                              ▼
-                  w_force boot_a  ◀──────────  w_force vbmeta_a
-                         │
-                    reboot-fastboot → boot (orange) → su → root ✓
-```
+| Bahan | Lokasi | Catatan |
+|---|---|---|
+| **Stock boot A14 C.23** | `boot\stock_boot.img` | Hasil extract PAC A14 (sha1 `9BB331EC...`) |
+| **Boot patched Magisk** | `boot\magisk_patched_boot.img` | Siap flash (sha1 `A8BCB42F...`) |
+| **Verify boot read-back** | `boot\verify_boot_a.img` | Baca dari device saat uji |
+| **vbmeta_a asli (flags=0)** | `vbmeta\vbmeta_a_original.img` | Cadangan / bahan disable |
+| **vbmeta_a disabled (flags=2)** | `vbmeta\vbmeta_a_disabled.img` | Siap flash (sha1 `7C79BBFC...`) |
 
 ---
 
@@ -196,9 +178,9 @@ vbmeta_a (flags=0) ──▶ avbtool --flags 2 ──▶ vbmeta_a patched
 
 ```
 root-work/
-├── README.md                      ← Dokumen utama (tutorial + info)
-├── FLASH_MANUAL_INTERAKTIF.md     ← Panduan flash manual (ketik di prompt FDL2>)
-├── flash_root_boot_vbmeta.bat     ← Script flash boot+vbmeta via BROM (self-contained)
+├── README.md                      ← Dokumen ini
+├── FLASH_MANUAL_INTERAKTIF.md     ← Panduan flash manual (prompt FDL2>)
+├── flash_root_boot_vbmeta.bat     ← Script flash 1-klik (self-contained)
 ├── boot/
 │   ├── stock_boot.img             ← Stock boot A14 (67 MB)
 │   ├── magisk_patched_boot.img    ← Boot patched Magisk (67 MB)
@@ -207,16 +189,20 @@ root-work/
 │   ├── vbmeta_a_original.img      ← vbmeta_a asli (cadangan, flags=0)
 │   └── vbmeta_a_disabled.img      ← vbmeta patched flags=2 (1 MB, avbtool)
 ├── brom/                          ← Alat BROM (flash)
-│   ├── spd_dump.exe               ← Tool flash BROM
-│   ├── fdl1-sign.bin              ← FDL1 stage
-│   ├── lk-fdl2-sign.bin           ← FDL2 stage (u-boot/lk)
-│   ├── ums9230_hulk.xml           ← Layout partisi A/B
-│   ├── partition_*.xml            ← Layout partisi (session)
-│   ├── pgpt.bin                   ← Primary GPT
-│   ├── Channel.ini / Channel9.dll ← Konfigurasi & library spd_dump
-│   └── perintah-fdl1-fdl2.txt     ← Catatan perintah BROM + analisis NV
+│   ├── spd_dump.exe
+│   ├── fdl1-sign.bin / lk-fdl2-sign.bin
+│   ├── ums9230_hulk.xml / partition_*.xml / pgpt.bin
+│   ├── Channel.ini / Channel9.dll
+│   └── perintah-fdl1-fdl2.txt
+├── scripts/
+│   ├── patch_boot.bat             ← Patch boot milik sendiri (Magisk CLI)
+│   └── disable_vbmeta.bat         ← Disable vbmeta milik sendiri (avbtool)
+├── tools/
+│   └── avbtool.py                 ← Generator/patch vbmeta
 └── .gitignore                     ← *.log, backup NV/IMEI tidak di-commit
 ```
+
+---
 
 ## 🔢 Hash Bahan (untuk verifikasi)
 
@@ -225,6 +211,26 @@ root-work/
 | `boot\stock_boot.img` | `9BB331EC300AD684BF7FB2F28473F523CDD13C02` |
 | `boot\magisk_patched_boot.img` | `A8BCB42FBD2EBFE5B753C0C4021A6BB11D6BA2BD` |
 | `vbmeta\vbmeta_a_disabled.img` | `7C79BBFCF485822582B30DBE45B8B1DDAA6332B4` |
+
+---
+
+## 🧠 Info Proses (Kenapa Metode Ini)
+
+1. vbmeta_a top-level: **flags=0** (verification aktif), ditandatangani OEM key (`30f6c776...`).
+2. Partisi `boot` diverifikasi via **Chain Partition descriptor** (public key `d7fabec6...`).
+3. Boot image stock membawa **footer `VBMETA`** (AVB 1.0 `AVBf` + vbmeta embedded `AVB0`, flags=0).
+4. Setelah di-patch Magisk, kernel & ramdisk berubah → **digest footer tidak cocok**.
+5. Pada bootloader **locked**, boot image yang berubah **ditolak** → perlu `vbmeta_a` dengan
+   flag `AVB_VBMETA_IMAGE_FLAGS_VERIFICATION_DISABLED` (nilai `2`).
+6. Dengan flags=2, bootloader **skip verifikasi** semua partisi (orange state) tanpa unlock/wipe.
+
+```
+Stock boot ──▶ Magisk boot_patch.sh ──▶ boot patched
+vbmeta (flags=0) ──▶ avbtool --flags 2 ──▶ vbmeta disabled
+                   BROM w_force boot_a + vbmeta_a
+                       │
+              reboot-fastboot → boot (orange) → su → root ✓
+```
 
 ---
 
