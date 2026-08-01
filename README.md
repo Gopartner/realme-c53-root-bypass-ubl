@@ -12,7 +12,7 @@
 
 | Info | Nilai |
 |---|---|
-| **Model** | Realme C53 (RMX3760 / RMX3762) |
+| **Model** | Realme C53 (RMX3760) |
 | **SoC / Platform** | Unisoc T612 (**UMS9230H**, platform `qogirl6`) |
 | **Kondisi awal** | Android 15 (build `export_15_*`) |
 | **Downgrade** | A15 → **Android 14** (`RMX3760export_14_C.23`) |
