@@ -1,36 +1,161 @@
 @echo off
-REM ================================================================
-REM  ROOT via Magisk - TANPA UNLOCK BOOTLOADER (metode bypass UBL)
-REM  - boot_a   = boot\magisk_patched_boot.img (sha1 A8BCB42F...)
-REM  - vbmeta_a = vbmeta\vbmeta_a_disabled.img (avbtool flags=2,
-REM               VERIFICATION_DISABLED, algorithm NONE)
-REM  Flash via BROM/spd_dump (alat di folder brom\), lalu verify
-REM  read-back + reboot-fastboot
-REM
-REM  SELF-CONTAINED: semua alat & bahan ada di folder repo ini.
-REM  FDL: brom\fdl1-sign.bin + brom\lk-fdl2-sign.bin
-REM ================================================================
-setlocal
-set ROOT=%~dp0
-set TOOL=%ROOT%brom
-set VER=%ROOT%verify_out
-set LOG=%ROOT%wforce_root.log
-if not exist "%VER%" mkdir "%VER%"
-cd /d "%TOOL%"
+setlocal EnableExtensions
 
-spd_dump.exe --wait 300 exec_addr 0x65015f08 fdl fdl1-sign.bin 0x65000800 fdl lk-fdl2-sign.bin 0x9EFFFE00 exec ^
-  w_force boot_a "%ROOT%boot\magisk_patched_boot.img" ^
-  w_force vbmeta_a "%ROOT%vbmeta\vbmeta_a_disabled.img" ^
-  read_part boot_a 0 67108864 "%VER%\verify_root_boot_a.img" ^
-  read_part vbmeta_a 0 1048576 "%VER%\verify_root_vbmeta_a.img" ^
-  reboot-fastboot > "%LOG%" 2>&1
+REM ============================================================
+REM AUTO FLASH BOOT_A + VBMETA_A VIA SPD_DUMP
+REM ============================================================
 
-type "%LOG%"
+REM Lokasi folder project berdasarkan lokasi file BAT
+set "ROOT=%~dp0"
+
+REM Hapus backslash terakhir
+if "%ROOT:~-1%"=="\" set "ROOT=%ROOT:~0,-1%"
+
+REM ============================================================
+REM PATH TOOL BROM
+REM ============================================================
+
+set "BROM_DIR=%ROOT%\brom"
+
+set "SPD_DUMP=%BROM_DIR%\spd_dump.exe"
+set "FDL1=%BROM_DIR%\fdl1-sign.bin"
+set "FDL2=%BROM_DIR%\lk-fdl2-sign.bin"
+
+REM ============================================================
+REM PATH FILE PARTISI
+REM ============================================================
+
+set "BOOT_IMG=%ROOT%\boot\magisk_patched_boot.img"
+set "VBMETA_IMG=%ROOT%\vbmeta\vbmeta_a_disabled.img"
+
+REM ============================================================
+REM INFORMASI
+REM ============================================================
+
+echo ============================================================
+echo AUTO FLASH BOOT_A + VBMETA_A
+echo ============================================================
+echo.
+echo Project:
+echo "%ROOT%"
+echo.
+echo Target:
+echo.
+echo BOOT_A:
+echo "%BOOT_IMG%"
+echo.
+echo VBMETA_A:
+echo "%VBMETA_IMG%"
+echo.
+
+REM ============================================================
+REM VALIDASI TOOL
+REM ============================================================
+
+if not exist "%SPD_DUMP%" (
+    echo [ERROR] spd_dump.exe tidak ditemukan:
+    echo "%SPD_DUMP%"
+    goto :ERROR
+)
+
+if not exist "%FDL1%" (
+    echo [ERROR] fdl1-sign.bin tidak ditemukan:
+    echo "%FDL1%"
+    goto :ERROR
+)
+
+if not exist "%FDL2%" (
+    echo [ERROR] lk-fdl2-sign.bin tidak ditemukan:
+    echo "%FDL2%"
+    goto :ERROR
+)
+
+REM ============================================================
+REM VALIDASI IMAGE
+REM ============================================================
+
+if not exist "%BOOT_IMG%" (
+    echo [ERROR] magisk_patched_boot.img tidak ditemukan:
+    echo "%BOOT_IMG%"
+    goto :ERROR
+)
+
+if not exist "%VBMETA_IMG%" (
+    echo [ERROR] vbmeta_a_disabled.img tidak ditemukan:
+    echo "%VBMETA_IMG%"
+    goto :ERROR
+)
+
+echo [OK] Semua file ditemukan.
+echo.
+
+echo ============================================================
+echo MENUNGGU DEVICE DALAM MODE BROM
+echo ============================================================
+echo.
+echo Timeout: 300 detik
+echo.
+
+REM ============================================================
+REM KIRIM PERINTAH KE FDL2
+REM ============================================================
+
+(
+    REM Tampilkan daftar partisi
+    echo p
+
+    REM Cek ukuran boot_a
+    echo size_part boot_a
+
+    REM Pastikan vbmeta_a tersedia
+    echo check_part vbmeta_a
+
+    REM Aktifkan slot A
+    echo set_active a
+
+    REM Flash boot hasil Magisk
+    echo w_force boot_a "%BOOT_IMG%"
+
+    REM Flash vbmeta disabled
+    echo w_force vbmeta_a "%VBMETA_IMG%"
+
+    REM Reboot ke fastboot
+    echo reboot-fastboot
+
+) | "%SPD_DUMP%" --wait 300 exec_addr 0x65015f08 fdl "%FDL1%" 0x65000800 fdl "%FDL2%" 0x9EFFFE00 exec
+
+set "EXIT_CODE=%ERRORLEVEL%"
 
 echo.
-echo ================================================================
-echo  Hash hasil:
-echo ================================================================
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$a='%VER%\verify_root_boot_a.img'; $b='%VER%\verify_root_vbmeta_a.img'; if(Test-Path $a){(Get-FileHash $a -Algorithm SHA1).Hash; (Get-Item $a).Length} else {'boot MISSING'}; Write-Output ('target boot_a    = A8BCB42FBD2EBFE5B753C0C4021A6BB11D6BA2BD'); if(Test-Path $b){(Get-FileHash $b -Algorithm SHA1).Hash; (Get-Item $b).Length} else {'vbmeta MISSING'}; Write-Output ('target vbmeta_a  = 7C79BBFCF485822582B30DBE45B8B1DDAA6332B4 (flags=2, 1MB pad)')"
+echo ============================================================
+echo PROSES SELESAI
+echo ============================================================
+echo Exit code: %EXIT_CODE%
+echo.
+
+if not "%EXIT_CODE%"=="0" (
+    echo [ERROR] SPD_DUMP mengembalikan error.
+    goto :ERROR
+)
+
+echo [SUCCESS] Perintah flash telah dikirim.
+echo.
+echo Periksa output di atas untuk memastikan:
+echo.
+echo   - boot_a berhasil ditulis
+echo   - vbmeta_a berhasil ditulis
+echo   - reboot-fastboot berhasil dijalankan
+echo.
+
 pause
+exit /b 0
+
+
+:ERROR
+echo.
+echo ============================================================
+echo PROSES GAGAL
+echo ============================================================
+echo.
+pause
+exit /b 1
