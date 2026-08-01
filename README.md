@@ -42,7 +42,7 @@ Gunakan repository ini hanya pada perangkat sendiri dan dengan risiko sendiri.
 | **SoC / Platform**            | Unisoc T612 (`UMS9230H`)           |
 | **Board**                     | `ums9230_hulk`                     |
 | **Platform**                  | `qogirl6`                          |
-| **Kondisi awal**              | Android 15                         |
+| **Kondisi awal**              | Android 15(downgrade ke versi 14)  |
 | **Firmware pengujian root**   | Android 14 `RMX3760export_14_C.23` |
 | **Bootloader saat pengujian** | Locked                             |
 | **AVB sebelum patch**         | Enforcing                          |
