@@ -25,6 +25,46 @@ Repo ini menyediakan **alat + bahan** untuk root Realme C53 / RMX3760 / RMX3762
 
 ---
 
+## 🎛️ Penting: Partisi Slot A/B
+
+Device ini memakai sistem **A/B (VAB)** — semua partisi boot/modem/NV punya dua salinan:
+`boot_a` / `boot_b`, `vbmeta_a` / `vbmeta_b`, `l_fixnv1_a` / `l_fixnv1_b`, dst.
+
+Yang **harus di-flash adalah slot yang sedang aktif (active slot)**, bukan keduanya
+secara asal — jika Anda flash ke slot non-aktif, perubahan tidak akan dipakai saat boot.
+
+**Cara cek slot aktif:**
+
+```
+adb shell getprop ro.boot.slot_suffix
+```
+- Output `_a` → slot aktif = **A** → flash ke `boot_a`, `vbmeta_a`
+- Output `_b` → slot aktif = **B** → flash ke `boot_b`, `vbmeta_b`
+
+> ℹ️ Pada perangkat uji (device ini), slot aktif = **`_a`**, sehingga semua contoh di
+> repo ini (script & panduan manual) memakai `boot_a` / `vbmeta_a`.
+>
+> ⚠️ Jika slot aktif HP Anda `_b`, gunakan nama partisi **`_b`**:
+> ```
+> w_force boot_b ..\boot\magisk_patched_boot.img
+> w_force vbmeta_b ..\vbmeta\vbmeta_a_disabled.img
+> ```
+> (atau ubah `boot_a`→`boot_b`, `vbmeta_a`→`vbmeta_b` di `flash_root_boot_vbmeta.bat`)
+
+**Cara cek slot lewat BROM (mode download):**
+
+```
+FDL2> p
+```
+Output menampilkan daftar partisi (perhatikan apakah `boot_a` & `boot_b` ada).
+Partisi aktif bisa dicek dengan `set_active`:
+```
+FDL2> set_active a
+```
+Perintah `set_active a` / `set_active b` memaksa slot tertentu sebagai slot aktif.
+
+---
+
 ## 🧭 Langkah 0 — Cek Firmware Aktif di HP Anda
 
 Hubungkan HP (aktifkan **USB debugging**), lalu jalankan:

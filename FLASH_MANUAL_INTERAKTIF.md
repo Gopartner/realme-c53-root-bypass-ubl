@@ -6,6 +6,32 @@ ketik partisi satu-persatu.
 
 ---
 
+## 🎛️ Penting: Slot A/B
+
+Device memakai sistem **A/B (VAB)** — partisi ada dua salinan: `boot_a`/`boot_b`,
+`vbmeta_a`/`vbmeta_b`, `l_fixnv1_a`/`l_fixnv1_b`, dst.
+
+**Yang harus di-flash = slot yang aktif.** Cek slot aktif:
+
+```
+adb shell getprop ro.boot.slot_suffix
+```
+
+- `_a` → flash `boot_a`, `vbmeta_a` (sama seperti contoh di repo ini)
+- `_b` → flash `boot_b`, `vbmeta_b`
+
+Contoh di panduan ini memakai slot **`_a`** (slot aktif device uji).
+Jika slot aktif Anda `_b`, ganti `boot_a`→`boot_b` dan `vbmeta_a`→`vbmeta_b`.
+
+Di prompt FDL2>, slot aktif bisa dicek / diubah:
+```
+FDL2> p                       REM lihat daftar partisi (boot_a & boot_b)
+FDL2> set_active a            REM paksa slot A aktif
+FDL2> set_active b            REM paksa slot B aktif
+```
+
+---
+
 ## Persiapan
 
 1. Buka **Command Prompt** di folder `brom\` repo ini:
