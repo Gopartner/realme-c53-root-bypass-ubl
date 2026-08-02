@@ -6,3 +6,10 @@ Desktop.ini
 # Bahan NV/IMEI (data pribadi) TIDAK masuk repo
 **/backup_a15_fresh/
 **/*nvitem*
+
+# File kerja dump (bukan bahan repo) TIDAK masuk repo
+/misc.bin
+/pgpt.bin
+/partition_*.xml
+/uid
+/verify_out/
