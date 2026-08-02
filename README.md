@@ -1,12 +1,14 @@
-# Root Realme C53 (RMX3760) via Magisk menggunakan BROM/SPD Dump
+# Root Perangkat Android via BROM/SPD Dump (Magisk + Unisoc/SPD)
 
 > **Metode root:** Magisk-patched `boot` + patched `vbmeta` dengan flag `AVB_VBMETA_IMAGE_FLAGS_VERIFICATION_DISABLED`.
 >
-> **Metode flash:** Unisoc BROM menggunakan `spd_dump`.
+> **Metode flash:** BROM (SoC Unisoc/SPD) menggunakan `spd_dump`.
 >
 > **Status bootloader:** Metode ini telah diuji pada perangkat dengan bootloader masih terkunci, tanpa proses unlock bootloader dan tanpa wipe data.
 >
-> **Status pengujian:** Lihat bagian [Status Pengujian](#status-pengujian) untuk hasil terbaru.
+> **Repositori generik:** bisa dipakai untuk perangkat Android lain selama bahan partisi (`boot`/`vbmeta`) disiapkan khusus untuk merek + model tersebut. Bahan `.img` di sini **tidak kompatibel** lintas perangkat — selalu siapkan bahan sendiri.
+>
+> **Status pengujian per perangkat (merek + model):** lihat [TESTED_DEVICES.md](TESTED_DEVICES.md) — status `tested` / `belum` selalu jelas di sana.
 
 ---
 
@@ -16,7 +18,7 @@ Repository ini berisi image partisi yang dibuat dan diuji untuk firmware tertent
 
 Sebelum melakukan flash, pastikan:
 
-- Model perangkat adalah **Realme C53 (RMX3760)**.
+- Merek + model perangkat kamu tercatat di [TESTED_DEVICES.md](TESTED_DEVICES.md) dan bahan yang dipakai sesuai baris tersebut.
 - Firmware aktif sesuai dengan build yang disebutkan pada bagian kompatibilitas.
 - Slot aktif perangkat sudah diketahui.
 - File `boot` dan `vbmeta` sesuai dengan firmware perangkat.
@@ -36,7 +38,41 @@ Gunakan repository ini hanya pada perangkat sendiri dan dengan risiko sendiri.
 
 ---
 
-# 🧪 Perangkat dan Firmware yang Sudah Diuji
+# 👥 Alur Penggunaan
+
+Repository ini punya **dua peran**: **pengguna** (end-user yang memakai script
+jadi) dan **pengembang** (yang menyiapkan bahan & melakukan riset). Status
+perangkat dibedakan lewat [TESTED_DEVICES.md](TESTED_DEVICES.md).
+
+## User Flow (end-user)
+
+1. Masuk BROM: HP **mati** → tahan **Vol+ & Vol−** → colok USB → muncul `SPRD U2S Diag (COMx)`.
+2. Jalankan **`flash_all_partisi_root.bat`** — bahan sudah dikonfigurasi di bagian `KONFIGURASI BAHAN` (tidak perlu diubah user).
+3. Script: deteksi BROM → konfirmasi → tulis `boot_a` (+`vbmeta_a`/`init_boot_a` bila diisi) → **read-back + verifikasi hash** → reboot.
+4. Boot ke Android:
+   - ✅ Normal → selesai (cek root: `adb shell su -c id`).
+   - ❌ Bootloop → jalankan `restore_only_boot.bat` (atau `restore_all.bat`), lalu laporkan ke pengembang.
+5. User **tidak** perlu memahami isi internal script.
+
+## Development Flow (pengembang)
+
+1. **Cek registry**: cari merek + model di [TESTED_DEVICES.md](TESTED_DEVICES.md) — kalau belum ada, tambahkan baris `⬜ Belum diuji`.
+2. **Siapkan bahan** khusus perangkat tersebut (file `.img` di `boot\`/`vbmeta\`). Jangan pakai bahan milik perangkat lain.
+3. **Aktifkan bahan**: edit `KONFIGURASI BAHAN` di `flash_all_partisi_root.bat` (`BOOT_IMG` / `VBMETA_IMG` / `INITBOOT_IMG`) — **jangan membuat script baru**.
+4. **Uji** di perangkat (prosedur = User Flow).
+5. **Perbarui status** di `TESTED_DEVICES.md`:
+   - ✅ Tested OK → boot + root terbukti.
+   - 🚧 Dalam uji / ⚠️ Sebagian → masih riset (tulis temuan di `Catatan`).
+   - ❌ Gagal → metode tidak jalan di perangkat itu.
+   Jangan hapus baris lama; tambahkan baris baru + tanggal.
+
+---
+
+# 🧪 Perangkat Acuan (Contoh) dan Firmware
+
+Bagian ini mencatat perangkat yang menjadi **acuan pengembangan** repository.
+Untuk daftar lengkap perangkat lain + status `tested`/`belum`, lihat
+**[TESTED_DEVICES.md](TESTED_DEVICES.md)**.
 
 | Informasi                     | Nilai                              |
 | ----------------------------- | ---------------------------------- |
@@ -63,25 +99,59 @@ Gunakan repository ini hanya pada perangkat sendiri dan dengan risiko sendiri.
 
 # 📊 Status Pengujian
 
-Hasil pengujian metode ini pada perangkat pengujian:
+> **Registry resmi status (per merek + model): [TESTED_DEVICES.md](TESTED_DEVICES.md).**
+> Status di bawah hanya ringkasan perangkat acuan.
 
-| Tahap                                                        | Hasil                                             |
-| ------------------------------------------------------------ | ------------------------------------------------- |
-| Patch `boot` dengan Magisk                                   | Berhasil, kernel identik dengan stock             |
-| Patch `vbmeta` flag `AVB_VBMETA_IMAGE_FLAGS_VERIFICATION_DISABLED` | Berhasil                                          |
-| Flash `boot_a` patched + `vbmeta_a` disabled                 | **Gagal boot**                                    |
+Hasil pengujian metode ini pada perangkat pengujian (Realme C53 RMX3760):
 
-Setelah flash, perangkat menampilkan:
+| Tahap                                                              | Hasil                                             |
+| ------------------------------------------------------------------ | ------------------------------------------------- |
+| Patch `boot` dengan Magisk                                         | Berhasil, kernel identik dengan stock             |
+| Flash `boot_a` patched + `vbmeta_a` disabled (versi awal, salah)   | **Gagal boot** (lihat analisis di bawah)          |
+| Analisis AVB: root cause ditemukan                                 | Selesai                                           |
+| Flash `boot_a` fixed + `vbmeta_a` disabled2                        | **Belum diuji**                                   |
+| Arsitektur ramdisk: `boot` = init asli (PID 1), init_boot/vendor_boot tidak dipakai | Selesai (analisis)          |
+| Re-encoded stock via pipeline baru (eksperimen A, kontrol)         | **Belum diuji**                                   |
+| Boot patched Magisk `VENDORBOOT=false` / `=true` (digest benar)    | **Bootloop** (bukan masalah AVB)                  |
+
+> 📌 Jika kamu pengembang dan mengetes perangkat lain, tambahkan/update baris di
+> **TESTED_DEVICES.md**, bukan mengubah tabel ini.
+
+## 🔍 Analisis: Penyebab `no valid os found!!`
+
+Verifikasi boot pada perangkat ini **tidak** dilakukan langsung oleh partisi `vbmeta_a`. Alur sebenarnya:
+
+1. `vbmeta_a` hanya berisi **chain-partition descriptor** untuk partisi `boot` (menyediakan public key).
+2. Partisi `boot` memiliki **AVB footer** (`AVBf`) yang menunjuk ke **vbmeta embedded** di dalam image boot itu sendiri.
+3. Vbmeta embedded berisi **hash descriptor SHA-256** yang mencakup seluruh isi boot image (`kernel` + `ramdisk`), mis. `image_size = 40132608` pada stock.
+4. Bootloader (LK) menghitung `SHA256(salt + boot_image[0:image_size])` dan membandingkannya dengan digest di vbmeta embedded.
+
+Karena Magisk mengubah `ramdisk`, digest di vbmeta embedded tidak lagi cocok dengan isi boot → verifikasi gagal → bootloader menolak boot:
 
 ```text
 no valid os found!!
 ```
 
-beberapa detik lalu mati. Bootloader dengan status terkunci **menolak** image boot yang sudah dimodifikasi meskipun `vbmeta` sudah dipatch.
+Verifikasi hash dibuktikan secara kalkulasi:
 
-> ⚠️ **Kesimpulan sementara:** pada konfigurasi perangkat dan firmware pengujian ini, metode bypass vbmeta **belum berhasil** melewati verifikasi bootloader.
+```text
+SHA256(salt + stock[0:40132608])    = ad2b6dbb...  (cocok dengan digest di vbmeta embedded)
+SHA256(salt + patched[0:40132608])  = 5312e12e...  (tidak cocok)
+```
+
+> Catatan: vbmeta pada perangkat ini **unsigned** (`algorithm = NONE`, tanpa descriptor hash di `vbmeta_a`), dan header AVB-nya **big-endian** (varian SPRD/Unisoc dari `avbtool 1.2.0`). Karena unsigned, digest pada vbmeta embedded dapat dihitung ulang tanpa perlu tanda tangan.
+
+## ✅ Solusi yang Diterapkan
+
+1. **`magisk_patched_boot_fixed.img`** — vbmeta embedded pada boot patched diperbaiki:
+   - `image_size` diubah dari `40132608` → `39956480` (posisi vbmeta embedded pada image patched).
+   - Digest SHA-256 dihitung ulang agar cocok dengan isi boot patched.
+   - Terverifikasi: `SHA256(salt + fixed[0:39956480])` cocok dengan digest baru.
+2. **`vbmeta_a_disabled2.img`** — flag `AVB_VBMETA_IMAGE_FLAGS_VERIFICATION_DISABLED` (`flags = 2`) di-offset header yang benar (offset 112), sebagai pengaman tambahan.
+
+> ⚠️ **Status:** pengujian flash untuk kedua file baru ini **belum dilakukan** pada perangkat.
 >
-> Jika perangkat mengalami gejala di atas, gunakan script restore (lihat bagian [Restore / Rollback](#-restore--rollback)) untuk mengembalikan `boot_a` dan `vbmeta_a` ke kondisi stock.
+> Jika perangkat kembali gagal boot (misalnya menampilkan `no valid os found!!`), gunakan script restore (lihat bagian [Restore / Rollback](#-restore--rollback)) untuk mengembalikan `boot_a` dan `vbmeta_a` ke kondisi stock.
 
 ---
 
@@ -135,19 +205,23 @@ set_active a
 
 # 📦 File Bahan
 
-| File                    | Lokasi                         | Keterangan                               |
-| ----------------------- | ------------------------------ | ---------------------------------------- |
-| **Magisk-patched boot** | `boot\magisk_patched_boot.img` | Image boot hasil patch Magisk            |
-| **Stock boot**          | `boot\stock_boot.img`          | Backup image boot asli untuk rollback    |
-| **vbmeta disabled**     | `vbmeta\vbmeta_a_disabled.img` | `vbmeta_a` dengan verification disabled  |
-| **vbmeta original**     | `vbmeta\vbmeta_a_original.img` | Backup `vbmeta_a` asli untuk rollback    |
+| File                    | Lokasi                         | Keterangan                                            |
+| ----------------------- | ------------------------------ | ----------------------------------------------------- |
+| **Magisk-patched boot (fixed)** | `boot\magisk_patched_boot_fixed.img` | Boot hasil patch Magisk + digest AVB diperbaiki (untuk flash) |
+| **Magisk-patched boot** | `boot\magisk_patched_boot.img` | Image boot hasil patch Magisk (tanpa perbaikan digest) |
+| **Stock boot**          | `boot\stock_boot.img`          | Backup image boot asli untuk rollback                 |
+| **vbmeta disabled (fixed)** | `vbmeta\vbmeta_a_disabled2.img` | `vbmeta_a` dengan flag verification disabled di offset benar (untuk flash) |
+| **vbmeta disabled**     | `vbmeta\vbmeta_a_disabled.img` | Versi awal patch yang salah offset (tidak dipakai lagi) |
+| **vbmeta original**     | `vbmeta\vbmeta_a_original.img` | Backup `vbmeta_a` asli untuk rollback                 |
 
 Hash file:
 
 | File                           | SHA-1                                      |
 | ------------------------------ | ------------------------------------------ |
+| `boot\magisk_patched_boot_fixed.img` | `08739393AC7FA449A1AE1D0B1B55251C0BBBE96C` |
 | `boot\magisk_patched_boot.img` | `A8BCB42FBD2EBFE5B753C0C4021A6BB11D6BA2BD` |
 | `boot\stock_boot.img`          | `9BB331EC300AD684BF7FB2F28473F523CDD13C02` |
+| `vbmeta\vbmeta_a_disabled2.img` | `C48427BC091B20A7CB5A42FC45705A71F2EA34BD` |
 | `vbmeta\vbmeta_a_disabled.img` | `5FA4A6B5603C576974C63D275DE41F1C8A4A0F4D` |
 | `vbmeta\vbmeta_a_original.img` | `3D8684BFADEFE8BF1E654D5B2638A86E11A3B93E` |
 
@@ -171,11 +245,18 @@ Setelah repository berhasil di-clone, pilih salah satu metode berikut:
 
 | Metode                       | File                                 | Keterangan                                             |
 | ---------------------------- | ------------------------------------ | ------------------------------------------------------ |
-| **Flash otomatis**           | `flash_root_boot_vbmeta.bat`         | Flash boot patched + vbmeta disabled otomatis          |
+| **Flash all partisi root**    | `flash_all_partisi_root.bat`               | Flash boot_a + vbmeta_a + init_boot_a sesuai konfigurasi bahan (bisa salah satu / semua) |
 | **Flash manual**             | `brom\start_spd_dump.bat`            | User mengetik perintah satu per satu di prompt `FDL2>` |
-| **Restore stock (boot+vbmeta)** | `restore_stock_boot_vbmeta.bat`   | Kembalikan `boot_a` + `vbmeta_a` ke kondisi stock      |
-| **Restore stock boot saja**  | `restore_stock_boot_only.bat`        | Kembalikan `boot_a` ke stock (vbmeta tidak disentuh)   |
-| **Restore original vbmeta saja** | `restore_stock_vbmeta_only.bat`  | Kembalikan `vbmeta_a` ke original (boot tidak disentuh) |
+| **Restore semua stock**      | `restore_all.bat`                    | Kembalikan `boot_a` + `vbmeta_a` + `init_boot_a` ke stock |
+| **Restore stock boot saja**  | `restore_only_boot.bat`              | Kembalikan `boot_a` ke stock (vbmeta tidak disentuh)   |
+| **Restore original vbmeta saja** | `restore_only_vbmeta.bat`        | Kembalikan `vbmeta_a` ke original (boot tidak disentuh) |
+
+> **Catatan workflow:** nama script di atas **tetap** dan tidak berubah walau
+> bahan (file .img) berganti. Ganti bahan cukup dengan mengedit variabel
+> `BOOT_IMG` / `VBMETA_IMG` / `INITBOOT_IMG` di bagian `KONFIGURASI BAHAN`
+> pada `flash_all_partisi_root.bat`, atau taruh file .img baru di subfolder
+> `boot\` / `vbmeta\` lalu tambahkan baris di daftar bahan script.
+> JANGAN membuat script .bat baru untuk tiap bahan.
 
 ---
 
@@ -200,9 +281,9 @@ SPRD U2S Diag (COM4)
 
 Nama perangkat dan nomor COM dapat berbeda tergantung driver serta komputer yang digunakan.
 
-Contoh tampilan saat `flash_root_boot_vbmeta.bat` dijalankan:
+Contoh tampilan saat `flash_all_partisi_root.bat` dijalankan:
 
-![Tampilan script flash_root_boot_vbmeta.bat](image.png)
+![Tampilan script flash_all_partisi_root.bat](image.png)
 
 ---
 
@@ -229,16 +310,19 @@ SPRD U2S Diag (COMx)
 Dari folder utama repository, klik dua kali:
 
 ```text
-flash_root_boot_vbmeta.bat
+flash_all_partisi_root.bat
 ```
 
 Atau jalankan melalui Command Prompt:
 
 ```cmd
-flash_root_boot_vbmeta.bat
+flash_all_partisi_root.bat
 ```
 
-Script akan menggunakan file berikut:
+Script akan memakai bahan sesuai variabel `BOOT_IMG` / `VBMETA_IMG` /
+`INITBOOT_IMG` pada bagian **KONFIGURASI BAHAN** di dalam script
+(pilih file .img mana yang mau di-flash; kosongkan untuk tidak menyentuh
+partisi itu). Contoh bahan:
 
 ```text
 brom\spd_dump.exe
@@ -247,14 +331,16 @@ brom\fdl1-sign.bin
 
 brom\lk-fdl2-sign.bin
 
-boot\magisk_patched_boot.img
+boot\magisk_patched_boot_fixed.img   (atau bahan boot lain)
 
-vbmeta\vbmeta_a_disabled.img
+vbmeta\vbmeta_a_disabled2.img        (atau dikosongkan / bahan vbmeta lain)
 ```
 
-Path tidak perlu diubah secara manual.
+Path tool (`brom\`) tidak perlu diubah secara manual. Bahan baru cukup
+disimpan di subfolder `boot\` / `vbmeta\` lalu diubah di konfigurasi script
+— **jangan buat script .bat baru**.
 
-Script menggunakan lokasi file `flash_root_boot_vbmeta.bat` sebagai root project, sehingga repository dapat di-clone ke drive atau folder mana pun.
+Script menggunakan lokasi file `flash_all_partisi_root.bat` sebagai root project, sehingga repository dapat di-clone ke drive atau folder mana pun.
 
 Contoh lokasi yang tetap dapat digunakan:
 
@@ -395,13 +481,13 @@ check_part vbmeta_a
 Salin:
 
 ```text
-w_force boot_a "..\boot\magisk_patched_boot.img"
+w_force boot_a "..\boot\magisk_patched_boot_fixed.img"
 ```
 
 Perintah tersebut menulis:
 
 ```text
-boot\magisk_patched_boot.img
+boot\magisk_patched_boot_fixed.img
 ```
 
 ke partisi:
@@ -417,13 +503,13 @@ boot_a
 Salin:
 
 ```text
-w_force vbmeta_a "..\vbmeta\vbmeta_a_disabled.img"
+w_force vbmeta_a "..\vbmeta\vbmeta_a_disabled2.img"
 ```
 
 Perintah tersebut menulis:
 
 ```text
-vbmeta\vbmeta_a_disabled.img
+vbmeta\vbmeta_a_disabled2.img
 ```
 
 ke partisi:
@@ -510,32 +596,32 @@ Jika perangkat gagal boot (misalnya menampilkan `no valid os found!!`), kembalik
 
 Masukkan perangkat ke mode BROM (lihat bagian [Masuk ke Mode BROM](#-masuk-ke-mode-brom)), lalu jalankan salah satu script berikut dari folder utama repository:
 
-| Gejala                                   | Script                             | Yang dikembalikan              |
-| ---------------------------------------- | ---------------------------------- | ------------------------------ |
-| Gagal boot setelah flash boot + vbmeta   | `restore_stock_boot_vbmeta.bat`    | `boot_a` + `vbmeta_a`          |
-| Gagal boot, ingin cek boot saja          | `restore_stock_boot_only.bat`      | `boot_a`                       |
-| Ingin mengembalikan vbmeta original saja | `restore_stock_vbmeta_only.bat`    | `vbmeta_a`                     |
+| Gejala                                   | Script                       | Yang dikembalikan              |
+| ---------------------------------------- | ---------------------------- | ------------------------------ |
+| Gagal boot (pulihkan semua)              | `restore_all.bat`            | `boot_a` + `vbmeta_a` + `init_boot_a` |
+| Gagal boot, ingin cek boot saja          | `restore_only_boot.bat`      | `boot_a`                       |
+| Ingin mengembalikan vbmeta original saja | `restore_only_vbmeta.bat`    | `vbmeta_a`                     |
 
 Script melakukan:
 
 1. Deteksi otomatis perangkat BROM (`SPRD U2S Diag (COMx)`).
 2. `p` + `set_active a`.
 3. Menulis image stock ke partisi yang dituju.
-4. `reboot-fastboot`.
+4. Membaca ulang partisi lalu memverifikasi hash terhadap file bahan.
+5. `reboot-fastboot`.
 
 File yang dikembalikan:
 
 ```text
 boot\stock_boot.img
-```
-
-dan:
-
-```text
 vbmeta\vbmeta_a_original.img
+boot\init_boot_a.img
 ```
 
-> ⚠️ Jalankan hanya satu script dalam satu sesi, lalu reboot perangkat dan pastikan hasilnya sebelum menjalankan script lain.
+> ⚠️ Nama script restore tetap (`restore_all.bat`, `restore_only_boot.bat`,
+> `restore_only_vbmeta.bat`) dan tidak berubah walaupun bahan stock berganti.
+> Jalankan satu script dalam satu sesi, lalu reboot perangkat dan pastikan
+> hasilnya sebelum menjalankan script lain.
 
 ## 2. Restore Manual
 
@@ -585,30 +671,51 @@ realme-c53-root-bypass-ubl/
 ├── README.md
 │   └── Dokumentasi utama repository
 │
-├── flash_root_boot_vbmeta.bat
-│   └── Script flash otomatis (boot patched + vbmeta disabled)
+├── flash_all_partisi_root.bat
+│   └── Script flash bahan root (boot / vbmeta / init_boot sesuai konfigurasi)
 │
-├── restore_stock_boot_vbmeta.bat
-│   └── Script restore otomatis (boot stock + vbmeta original)
+├── restore_all.bat
+│   └── Script restore semua stock (boot + vbmeta + init_boot)
 │
-├── restore_stock_boot_only.bat
+├── restore_only_boot.bat
 │   └── Script restore boot stock saja
 │
-├── restore_stock_vbmeta_only.bat
+├── restore_only_vbmeta.bat
 │   └── Script restore vbmeta original saja
 │
 ├── boot/
 │   │
-│   ├── magisk_patched_boot.img
-│   │   └── Boot hasil patch Magisk
+│   ├── stock_boot.img
+│   │   └── Backup boot asli untuk rollback
 │   │
-│   └── stock_boot.img
-│       └── Backup boot asli untuk rollback
+│   ├── magisk_patched_boot_fixed.img
+│   │   └── Boot hasil patch Magisk VENDORBOOT=false + digest AVB diperbaiki [BOOTLOOP]
+│   │
+│   ├── magisk_patched_boot_vendorbool.img
+│   │   └── Hasil repack VENDORBOOT=true [BOOTLOOP]
+│   │
+│   ├── experiment_A_reecoded_stock.img
+│   │   └── Stock di-re-encode lewat pipeline repack (kontrol / uji pipeline)
+│   │
+│   ├── experiment_B1_meta.img
+│   │   └── magiskinit PREINITDEVICE=metadata (uji berikutnya)
+│   │
+│   ├── init_boot_a.img
+│   │   └── Stock init_boot (tidak dipakai device, tapi di-restore demi kelengkapan)
+│   │
+│   ├── magisk_patched-30700_b7wu6.img
+│   │   └── init_boot hasil patch Magisk [tidak berefek]
+│   │
+│   └── ramdisk_patched.cpio
+│       └── Ramdisk boot hasil patch Magisk (bahan repack eksperimen)
 │
 ├── vbmeta/
 │   │
+│   ├── vbmeta_a_disabled2.img
+│   │   └── vbmeta_a dengan flag verification disabled (offset benar, untuk flash)
+│   │
 │   ├── vbmeta_a_disabled.img
-│   │   └── vbmeta_a dengan verification disabled
+│   │   └── Versi awal patch yang salah offset (tidak dipakai lagi)
 │   │
 │   └── vbmeta_a_original.img
 │       └── Backup vbmeta_a asli untuk rollback

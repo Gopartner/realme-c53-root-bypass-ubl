@@ -1,7 +1,11 @@
-# Log & artefak sementara tidak di-commit
+# Log & artekak sementara tidak di-commit
 *.log
 Thumbs.db
 Desktop.ini
+
+# Cache Python
+__pycache__/
+*.pyc
 
 # Bahan NV/IMEI (data pribadi) TIDAK masuk repo
 **/backup_a15_fresh/
