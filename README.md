@@ -200,7 +200,9 @@ SPRD U2S Diag (COM4)
 
 Nama perangkat dan nomor COM dapat berbeda tergantung driver serta komputer yang digunakan.
 
-![Dokumentasi proses BROM](image.png)
+Contoh tampilan saat `flash_root_boot_vbmeta.bat` dijalankan:
+
+![Tampilan script flash_root_boot_vbmeta.bat](image.png)
 
 ---
 
