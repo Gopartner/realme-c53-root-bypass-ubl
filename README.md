@@ -200,9 +200,7 @@ SPRD U2S Diag (COM4)
 
 Nama perangkat dan nomor COM dapat berbeda tergantung driver serta komputer yang digunakan.
 
-Contoh tampilan saat perangkat terdeteksi di Device Manager:
-
-![Perangkat terdeteksi di Device Manager](brom/image.png)
+![Dokumentasi proses BROM](image.png)
 
 ---
 
@@ -614,9 +612,6 @@ realme-c53-root-bypass-ubl/
 │       └── Backup vbmeta_a asli untuk rollback
 │
 └── brom/
-    │
-    ├── image.png
-    │   └── Screenshot proses / hasil di Device Manager
     │
     ├── spd_dump.exe
     │   └── Tool komunikasi Unisoc BROM/FDL
