@@ -118,6 +118,7 @@ pushd "%BROM_DIR%"
 
 (
     echo p
+    echo set_active a
     echo size_part boot_a
     echo check_part boot_a
     echo check_part vbmeta_a

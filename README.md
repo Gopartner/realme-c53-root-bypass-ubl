@@ -61,14 +61,11 @@ Gunakan repository ini hanya pada perangkat sendiri dan dengan risiko sendiri.
 
 # 🎛️ Penting: Sistem Slot A/B
 
-Perangkat menggunakan sistem **A/B**. Beberapa partisi memiliki dua slot:
+Perangkat menggunakan sistem **A/B**. Repository ini hanya menyediakan image untuk **slot A**:
 
 ```text
 boot_a
-boot_b
-
 vbmeta_a
-vbmeta_b
 ```
 
 Image harus ditulis ke partisi yang sesuai dengan slot target.
@@ -87,24 +84,26 @@ Contoh hasil:
 _a
 ```
 
-Artinya slot aktif adalah **A**.
+Artinya slot aktif adalah **A** — sesuai dengan image yang disediakan.
 
-Jika hasilnya:
+Jika hasilnya `_b`, jangan langsung flash ke slot B. Image slot B tidak tersedia di repository ini; pastikan slot aktif dikembalikan ke **A** (lihat bagian berikut).
+
+## 2. Pastikan Slot Aktif A di Tool FDL
+
+Saat sudah berada di prompt `FDL2>`, cek daftar partisi:
 
 ```text
-_b
+p
 ```
 
-artinya slot aktif adalah **B**.
+Pastikan slot aktif adalah **A**. Jika terlihat slot **B** yang aktif, set ke A:
 
-> Repository ini saat ini menyediakan image dan perintah flash untuk **slot A**:
->
-> ```text
-> boot_a
-> vbmeta_a
-> ```
->
-> Jika perangkat menggunakan slot B, jangan hanya mengganti nama partisi menjadi `boot_b` atau `vbmeta_b`. Pastikan image yang digunakan benar dan sesuai dengan firmware serta slot target.
+```text
+set_active a
+```
+
+> ⚠️ Image di repository ini **hanya untuk slot A** (`boot_a`, `vbmeta_a`).
+> Jangan mengganti nama partisi menjadi `boot_b` / `vbmeta_b` — image slot B tidak tersedia.
 
 ---
 
@@ -123,7 +122,7 @@ Hash file:
 | File                           | SHA-1                                      |
 | ------------------------------ | ------------------------------------------ |
 | `boot\magisk_patched_boot.img` | `A8BCB42FBD2EBFE5B753C0C4021A6BB11D6BA2BD` |
-| `vbmeta\vbmeta_a_disabled.img` | `7C79BBFCF485822582B30DBE45B8B1DDAA6332B4` |
+| `vbmeta\vbmeta_a_disabled.img` | `5FA4A6B5603C576974C63D275DE41F1C8A4A0F4D` |
 
 ---
 
@@ -303,6 +302,19 @@ Salin:
 ```text
 p
 ```
+
+---
+
+## Pastikan Slot Aktif A
+
+Pastikan slot aktif adalah **A**. Jika terlihat slot **B** yang aktif, salin:
+
+```text
+set_active a
+```
+
+> ⚠️ Image yang disediakan hanya untuk slot A (`boot_a`, `vbmeta_a`).
+> Jangan flash ke `boot_b` / `vbmeta_b`.
 
 ---
 
